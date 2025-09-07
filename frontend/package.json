@@ -54,10 +54,9 @@
   },
   "scripts": {
     "preinstall": "npm config set legacy-peer-deps true",
-    "start": "craco start",
+    "start": "react-scripts start",
     "build": "react-scripts build",
-    "vercel-build": "react-scripts build",
-    "test": "craco test"
+    "test": "react-scripts test"
   },
   "browserslist": {
     "production": [
