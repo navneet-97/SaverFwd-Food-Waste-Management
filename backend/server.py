@@ -1286,6 +1286,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Add root route for health check
+@app.get("/")
+async def root():
+    return {
+        "message": "SaverFwd API is running!",
+        "status": "healthy",
+        "api_docs": "/docs",
+        "api_endpoints": "/api"
+    }
+
+# Add health check endpoint
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "SaverFwd Backend"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
@@ -1319,3 +1334,10 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+# Main entry point
+if __name__ == "__main__":
+    import uvicorn
+    # Use PORT from environment (Render provides this) or default to 8000
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
