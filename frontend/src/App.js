@@ -9,13 +9,31 @@ import { toast } from "sonner";
 import Navbar from "./components/Navbar";
 import Landing from "./components/Landing";
 
-// Lazy load heavy components for better performance
-const Login = lazy(() => import("./components/Login"));
-const Register = lazy(() => import("./components/Register"));
-const DonorDashboard = lazy(() => import("./components/DonorDashboard"));
-const RecipientDashboard = lazy(() => import("./components/RecipientDashboard"));
-const FoodBrowser = lazy(() => import("./components/FoodBrowser"));
-const ChatWidget = lazy(() => import("./components/ChatWidget"));
+// Retry function for failed lazy imports
+const retryLazyImport = (importFn, retries = 3) => {
+  return new Promise((resolve, reject) => {
+    importFn()
+      .then(resolve)
+      .catch((error) => {
+        console.warn(`Lazy import failed, retries left: ${retries}`, error);
+        if (retries > 0) {
+          setTimeout(() => {
+            retryLazyImport(importFn, retries - 1).then(resolve, reject);
+          }, 1000);
+        } else {
+          reject(error);
+        }
+      });
+  });
+};
+
+// Lazy load heavy components with retry logic
+const Login = lazy(() => retryLazyImport(() => import("./components/Login")));
+const Register = lazy(() => retryLazyImport(() => import("./components/Register")));
+const DonorDashboard = lazy(() => retryLazyImport(() => import("./components/DonorDashboard")));
+const RecipientDashboard = lazy(() => retryLazyImport(() => import("./components/RecipientDashboard")));
+const FoodBrowser = lazy(() => retryLazyImport(() => import("./components/FoodBrowser")));
+const ChatWidget = lazy(() => retryLazyImport(() => import("./components/ChatWidget")));
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -160,12 +178,85 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   return children;
 };
 
-// Loading Component
-const LoadingSpinner = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-  </div>
-);
+// Loading Component with timeout
+const LoadingSpinner = () => {
+  const [showSlowWarning, setShowSlowWarning] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSlowWarning(true);
+    }, 5000); // Show warning after 5 seconds
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+        <p className="text-gray-600 mb-2">Loading...</p>
+        {showSlowWarning && (
+          <div className="mt-4">
+            <p className="text-sm text-gray-500 mb-2">Taking longer than usual?</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="text-emerald-600 hover:text-emerald-700 text-sm underline"
+            >
+              Try refreshing the page
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// Error Boundary for lazy loading failures
+class LazyErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, retryCount: 0 };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Lazy loading error:', error, errorInfo);
+  }
+
+  handleRetry = () => {
+    this.setState({ 
+      hasError: false, 
+      retryCount: this.state.retryCount + 1 
+    });
+    // Force reload the page if multiple retries fail
+    if (this.state.retryCount >= 2) {
+      window.location.reload();
+    }
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Something went wrong</h2>
+            <p className="text-gray-600 mb-4">Failed to load the page. Please try again.</p>
+            <button 
+              onClick={this.handleRetry}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-md"
+            >
+              {this.state.retryCount >= 2 ? 'Reload Page' : 'Try Again'}
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // Main App Component
 function App() {
@@ -174,26 +265,28 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Navbar />
-          <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/browse" element={
-                <ProtectedRoute requiredRole="recipient">
-                  <FoodBrowser />
-                </ProtectedRoute>
-              } />
-              
-              {/* Protected Routes */}
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <DashboardRouter />
-                </ProtectedRoute>
-              } />
-            </Routes>
-          </Suspense>
+          <LazyErrorBoundary>
+            <Suspense fallback={<LoadingSpinner />}>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/browse" element={
+                  <ProtectedRoute requiredRole="recipient">
+                    <FoodBrowser />
+                  </ProtectedRoute>
+                } />
+                
+                {/* Protected Routes */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <DashboardRouter />
+                  </ProtectedRoute>
+                } />
+              </Routes>
+            </Suspense>
+          </LazyErrorBoundary>
           <ConditionalChatWidget />
         </BrowserRouter>
         <Toaster position="top-right" duration={2000} />
