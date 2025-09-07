@@ -1,11 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../App';
 
+// Simple cache to store API responses temporarily
+const apiCache = new Map();
+const CACHE_DURATION = 30000; // 30 seconds cache
+
 export const useSmartRefresh = ({
   fetchFunction,
   interval = 5000,
   onDataChange = null,
-  silentRefresh = true
+  silentRefresh = true,
+  cacheKey = null // Optional cache key for this data
 }) => {
   const { user } = useAuth();
   const [data, setData] = useState(null);
@@ -44,14 +49,39 @@ export const useSmartRefresh = ({
     }
   }, []);
 
-  // Enhanced fetch with change detection
+  // Enhanced fetch with change detection and caching
   const fetchData = useCallback(async (isManual = false) => {
     if (!user) return;
 
     try {
       if (isManual) setIsRefreshing(true);
       
+      // Check cache first if cacheKey is provided
+      if (cacheKey && !isManual) {
+        const cached = apiCache.get(cacheKey);
+        if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+          if (hasDataChanged(cached.data)) {
+            setData(cached.data);
+            lastDataRef.current = cached.data;
+            if (onDataChangeRef.current && !loading) {
+              onDataChangeRef.current(cached.data, lastDataRef.current);
+            }
+          }
+          setError(null);
+          setLoading(false);
+          return;
+        }
+      }
+      
       const newData = await fetchFunctionRef.current();
+      
+      // Cache the result if cacheKey is provided
+      if (cacheKey) {
+        apiCache.set(cacheKey, {
+          data: newData,
+          timestamp: Date.now()
+        });
+      }
       
       // Check if data actually changed
       if (hasDataChanged(newData)) {

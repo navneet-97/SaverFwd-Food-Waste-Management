@@ -29,12 +29,8 @@ const Login = () => {
     const result = await login(email, password);
     
     if (result.success) {
-      // Force navigation based on user role
-      if (result.user?.role === 'recipient') {
-        navigate('/browse');
-      } else {
-        navigate('/dashboard');
-      }
+      // Navigate to dashboard for all users after login
+      navigate('/dashboard');
       // Force page reload to ensure proper state
       setTimeout(() => window.location.reload(), 100);
     }

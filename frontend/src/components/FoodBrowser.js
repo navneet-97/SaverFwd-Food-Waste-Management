@@ -49,6 +49,7 @@ const FoodBrowser = () => {
       return response.data;
     }, [api]),
     interval: 8000, // Food items update reasonably in browse mode
+    cacheKey: 'food-items-browse'
     onDataChange: (newItems, oldItems) => {
       if (oldItems && !loading) {
         const newAvailableCount = newItems.filter(item => item.status === 'available').length;
