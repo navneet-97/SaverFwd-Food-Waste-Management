@@ -42,7 +42,7 @@ const RecipientDashboard = () => {
       return response.data;
     }, [api]),
     interval: 30000,
-    cacheKey: `recipient-stats-${user?.id}`
+    cacheKey: `recipient-stats-${user?.id}`,
     onDataChange: (newStats, oldStats) => {
       if (oldStats && !statsLoading) {
         if (newStats.claimed_items > oldStats.claimed_items) {
@@ -66,7 +66,7 @@ const RecipientDashboard = () => {
       return response.data;
     }, [api]),
     interval: 10000,
-    cacheKey: `recipient-orders-${user?.id}`
+    cacheKey: `recipient-orders-${user?.id}`,
     onDataChange: (newOrders, oldOrders) => {
       if (oldOrders && !ordersLoading) {
         // Check for status changes

@@ -54,7 +54,7 @@ const DonorDashboard = () => {
       return response.data;
     }, [api]),
     interval: 30000, // Stats update much less frequently
-    cacheKey: `donor-stats-${user?.id}`
+    cacheKey: `donor-stats-${user?.id}`,
     onDataChange: (newStats, oldStats) => {
       if (oldStats && !statsLoading) {
         // Notify about changes in stats
@@ -91,7 +91,7 @@ const DonorDashboard = () => {
       return response.data;
     }, [api]),
     interval: 8000, // Orders update reasonably
-    cacheKey: `donor-orders-${user?.id}`
+    cacheKey: `donor-orders-${user?.id}`,
     onDataChange: (newOrders, oldOrders) => {
       if (oldOrders && !ordersLoading) {
         const oldCount = oldOrders.length;
