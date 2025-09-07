@@ -48,7 +48,7 @@ const FoodBrowser = () => {
       const response = await api.get('/food-items');
       return response.data;
     }, [api]),
-    interval: 3000, // Food items update frequently in browse mode
+    interval: 8000, // Food items update reasonably in browse mode
     onDataChange: (newItems, oldItems) => {
       if (oldItems && !loading) {
         const newAvailableCount = newItems.filter(item => item.status === 'available').length;

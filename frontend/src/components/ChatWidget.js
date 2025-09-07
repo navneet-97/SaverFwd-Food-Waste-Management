@@ -136,7 +136,7 @@ const ChatWidget = () => {
         // Also refresh contacts list to show new messages
         fetchChatData();
       }
-    }, 3000);
+    }, 8000);
 
     return () => clearInterval(interval);
   }, [isOpen, activeChat]);
@@ -148,7 +148,7 @@ const ChatWidget = () => {
 
     const interval = setInterval(() => {
       fetchChatData();
-    }, 15000);
+    }, 30000);
 
     return () => clearInterval(interval);
   }, [isOpen, activeChat]);

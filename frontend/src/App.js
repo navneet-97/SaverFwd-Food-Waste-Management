@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense, lazy } from "react";
 import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 
-// Components
+// Components - Load immediately
 import Navbar from "./components/Navbar";
-import Login from "./components/Login";
-import Register from "./components/Register";
-import DonorDashboard from "./components/DonorDashboard";
-import RecipientDashboard from "./components/RecipientDashboard";
-import FoodBrowser from "./components/FoodBrowser";
 import Landing from "./components/Landing";
-import ChatWidget from "./components/ChatWidget";
+
+// Lazy load heavy components for better performance
+const Login = lazy(() => import("./components/Login"));
+const Register = lazy(() => import("./components/Register"));
+const DonorDashboard = lazy(() => import("./components/DonorDashboard"));
+const RecipientDashboard = lazy(() => import("./components/RecipientDashboard"));
+const FoodBrowser = lazy(() => import("./components/FoodBrowser"));
+const ChatWidget = lazy(() => import("./components/ChatWidget"));
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -158,6 +160,13 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   return children;
 };
 
+// Loading Component
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
+  </div>
+);
+
 // Main App Component
 function App() {
   return (
@@ -165,24 +174,26 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Navbar />
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/browse" element={
-              <ProtectedRoute requiredRole="recipient">
-                <FoodBrowser />
-              </ProtectedRoute>
-            } />
-            
-            {/* Protected Routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <DashboardRouter />
-              </ProtectedRoute>
-            } />
-          </Routes>
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/browse" element={
+                <ProtectedRoute requiredRole="recipient">
+                  <FoodBrowser />
+                </ProtectedRoute>
+              } />
+              
+              {/* Protected Routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <DashboardRouter />
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </Suspense>
           <ConditionalChatWidget />
         </BrowserRouter>
         <Toaster position="top-right" duration={2000} />

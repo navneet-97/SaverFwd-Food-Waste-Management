@@ -41,7 +41,7 @@ const RecipientDashboard = () => {
       const response = await api.get('/dashboard/stats');
       return response.data;
     }, [api]),
-    interval: 10000,
+    interval: 30000,
     onDataChange: (newStats, oldStats) => {
       if (oldStats && !statsLoading) {
         if (newStats.claimed_items > oldStats.claimed_items) {
@@ -64,7 +64,7 @@ const RecipientDashboard = () => {
       const response = await api.get('/orders');
       return response.data;
     }, [api]),
-    interval: 5000,
+    interval: 10000,
     onDataChange: (newOrders, oldOrders) => {
       if (oldOrders && !ordersLoading) {
         // Check for status changes
@@ -90,7 +90,7 @@ const RecipientDashboard = () => {
       const response = await api.get('/ratings');
       return response.data;
     }, [api]),
-    interval: 15000 // Ratings update less frequently
+    interval: 60000 // Ratings update much less frequently
   });
   
   const loading = statsLoading || ordersLoading || ratingsLoading;

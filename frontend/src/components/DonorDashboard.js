@@ -53,7 +53,7 @@ const DonorDashboard = () => {
       const response = await api.get('/dashboard/stats');
       return response.data;
     }, [api]),
-    interval: 10000, // Stats update less frequently
+    interval: 30000, // Stats update much less frequently
     onDataChange: (newStats, oldStats) => {
       if (oldStats && !statsLoading) {
         // Notify about changes in stats
@@ -76,7 +76,7 @@ const DonorDashboard = () => {
       const response = await api.get('/food-items');
       return response.data;
     }, [api]),
-    interval: 5000 // Food items update more frequently
+    interval: 10000 // Food items update reasonably
   });
 
   const {
@@ -88,7 +88,7 @@ const DonorDashboard = () => {
       const response = await api.get('/orders');
       return response.data;
     }, [api]),
-    interval: 3000, // Orders update most frequently
+    interval: 8000, // Orders update reasonably
     onDataChange: (newOrders, oldOrders) => {
       if (oldOrders && !ordersLoading) {
         const oldCount = oldOrders.length;
@@ -109,7 +109,7 @@ const DonorDashboard = () => {
       const response = await api.get('/donors/recipients');
       return response.data;
     }, [api]),
-    interval: 15000 // Recipients update less frequently
+    interval: 60000 // Recipients update much less frequently
   });
 
   const {
@@ -121,7 +121,7 @@ const DonorDashboard = () => {
       const response = await api.get(`/donors/${user?.id}/rating-summary`);
       return response.data;
     }, [api, user?.id]),
-    interval: 30000 // Rating summary updates less frequently
+    interval: 120000 // Rating summary updates very infrequently
   });
 
   // Form state for adding/editing food items

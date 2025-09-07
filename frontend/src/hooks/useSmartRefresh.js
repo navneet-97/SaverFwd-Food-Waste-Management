@@ -26,10 +26,22 @@ export const useSmartRefresh = ({
     onDataChangeRef.current = onDataChange;
   }, [onDataChange]);
 
-  // Smart data comparison to detect changes
+  // Optimized data comparison to detect changes
   const hasDataChanged = useCallback((newData) => {
     if (!lastDataRef.current) return true;
-    return JSON.stringify(newData) !== JSON.stringify(lastDataRef.current);
+    
+    // Quick length comparison first
+    if (Array.isArray(newData) && Array.isArray(lastDataRef.current)) {
+      if (newData.length !== lastDataRef.current.length) return true;
+    }
+    
+    // Deep comparison only if necessary
+    try {
+      return JSON.stringify(newData) !== JSON.stringify(lastDataRef.current);
+    } catch (error) {
+      console.warn('Error comparing data:', error);
+      return true; // Assume changed if comparison fails
+    }
   }, []);
 
   // Enhanced fetch with change detection
