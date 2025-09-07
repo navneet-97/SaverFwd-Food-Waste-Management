@@ -30,6 +30,9 @@ SaverFwd connects food businesses with recipients to reduce waste by facilitatin
 **Donor:** `donor@example.com` / `password123`  
 **Recipient:** `recipient@example.com` / `password123`
 
+**Donor1:** `donor1@example.com` / `password123`  
+**Recipient1:** `recipient1@example.com` / `password123`
+
 ### Local Development
 ```bash
 # Clone repository
