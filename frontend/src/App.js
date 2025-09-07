@@ -9,6 +9,12 @@ import { toast } from "sonner";
 import Navbar from "./components/Navbar";
 import Landing from "./components/Landing";
 
+// Preload function for critical components
+const preloadComponent = (importFn) => {
+  const componentImport = importFn();
+  return componentImport;
+};
+
 // Retry function for failed lazy imports
 const retryLazyImport = (importFn, retries = 3) => {
   return new Promise((resolve, reject) => {
@@ -299,8 +305,10 @@ function App() {
 const ConditionalChatWidget = () => {
   const location = useLocation();
   
-  // Don't show ChatWidget on home page
-  if (location.pathname === '/') {
+  // Don't show ChatWidget on authentication pages and home page
+  const hiddenPaths = ['/', '/login', '/register'];
+  
+  if (hiddenPaths.includes(location.pathname)) {
     return null;
   }
   

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../App';
 import { Button } from './ui/button';
@@ -17,6 +17,19 @@ import {
 
 const Landing = () => {
   const { user } = useAuth();
+  
+  // Preload Login and Register components when Landing loads
+  useEffect(() => {
+    // Preload critical authentication components
+    const preloadAuthComponents = () => {
+      import('./Login').catch(err => console.warn('Login preload failed:', err));
+      import('./Register').catch(err => console.warn('Register preload failed:', err));
+    };
+    
+    // Delay preload to not interfere with Landing component rendering
+    const timer = setTimeout(preloadAuthComponents, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen">
