@@ -95,7 +95,8 @@ dist
 
 # Gatsby files
 .cache/
-public
+# Note: Don't ignore frontend/public as it contains index.html
+# Only ignore Gatsby public builds
 
 # Storybook build outputs
 .out
