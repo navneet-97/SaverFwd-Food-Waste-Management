@@ -25,6 +25,7 @@ import StarRating from './ui/star-rating';
 import RatingForm from './ui/rating-form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Link } from 'react-router-dom';
+import { StatCardSkeleton, OrderSkeleton } from './ui/skeleton';
 
 const RecipientDashboard = () => {
   const { api, user } = useAuth();
@@ -95,7 +96,9 @@ const RecipientDashboard = () => {
     interval: 60000 // Ratings update much less frequently
   });
   
-  const loading = statsLoading || ordersLoading || ratingsLoading;
+  // Progressive loading - only show full loading if nothing is cached
+  const hasAnyCachedData = stats || orders || ratings;
+  const showFullLoading = !hasAnyCachedData && (statsLoading || ordersLoading || ratingsLoading);
 
   const openAddressInMaps = (address) => {
     // Create Google Maps URL with the address
@@ -206,7 +209,7 @@ const RecipientDashboard = () => {
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  if (loading) {
+  if (showFullLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
@@ -237,46 +240,56 @@ const RecipientDashboard = () => {
           </Link>
         </div>
 
-        {/* Stats Cards */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {/* Stats Cards - Progressive Loading */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {statsLoading && !stats ? (
+            <StatCardSkeleton />
+          ) : (
             <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-emerald-100">Items Claimed</p>
-                    <p className="text-3xl font-bold">{stats.claimed_items}</p>
+                    <p className="text-3xl font-bold">{stats?.claimed_items || 0}</p>
                   </div>
                   <Heart className="h-12 w-12 text-emerald-200" />
                 </div>
               </CardContent>
             </Card>
+          )}
 
+          {statsLoading && !stats ? (
+            <StatCardSkeleton />
+          ) : (
             <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-blue-100">Items Purchased</p>
-                    <p className="text-3xl font-bold">{stats.purchased_items}</p>
+                    <p className="text-3xl font-bold">{stats?.purchased_items || 0}</p>
                   </div>
                   <ShoppingCart className="h-12 w-12 text-blue-200" />
                 </div>
               </CardContent>
             </Card>
+          )}
 
+          {statsLoading && !stats ? (
+            <StatCardSkeleton />
+          ) : (
             <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-purple-100">Total Spent</p>
-                    <p className="text-3xl font-bold">₹{stats.total_spent || 0}</p>
+                    <p className="text-3xl font-bold">₹{stats?.total_spent || 0}</p>
                   </div>
                   <DollarSign className="h-12 w-12 text-purple-200" />
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Main Content */}
         <Tabs defaultValue="orders" className="space-y-6">
@@ -290,7 +303,16 @@ const RecipientDashboard = () => {
             <h2 className="text-2xl font-semibold text-gray-900">Recent Orders & Claims</h2>
             
             <div className="space-y-4">
-              {(orders || []).filter(order => order.status !== 'completed' && order.status !== 'cancelled').map((order) => (
+              {ordersLoading && !orders && (
+                // Show skeleton orders while loading
+                <div className="space-y-4">
+                  {[...Array(2)].map((_, i) => (
+                    <OrderSkeleton key={`order-skeleton-${i}`} />
+                  ))}
+                </div>
+              )}
+              
+              {!ordersLoading && (orders || []).filter(order => order.status !== 'completed' && order.status !== 'cancelled').map((order) => (
                 <Card key={order.id} className="card-hover">
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">

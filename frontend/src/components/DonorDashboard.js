@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import StarRating from './ui/star-rating';
 import { RatingDisplay, RatingSummary } from './ui/rating-display';
+import { StatCardSkeleton, FoodItemSkeleton, OrderSkeleton, RecipientSkeleton } from './ui/skeleton';
 
 const DonorDashboard = () => {
   const { api, user } = useAuth();
@@ -143,8 +144,9 @@ const DonorDashboard = () => {
     pickup_window_end: ''
   });
 
-  // Combined loading state
-  const loading = statsLoading || foodItemsLoading || ordersLoading || recipientsLoading || ratingSummaryLoading;
+  // Combined loading state - Only show full loading if nothing is cached
+  const hasAnyCachedData = stats || foodItems || orders || recipients || ratingSummary;
+  const showFullLoading = !hasAnyCachedData && (statsLoading || foodItemsLoading || ordersLoading || recipientsLoading || ratingSummaryLoading);
   const isRefreshing = statsRefreshing;
   
   // Manual refresh all data
@@ -446,7 +448,7 @@ const DonorDashboard = () => {
     return order.status === orderFilter;
   });
 
-  if (loading) {
+  if (showFullLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
@@ -482,46 +484,60 @@ const DonorDashboard = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
-        {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Stats Cards - Progressive Loading */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {statsLoading && !stats ? (
+            <StatCardSkeleton />
+          ) : (
             <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-emerald-100">Active Listings</p>
-                    <p className="text-3xl font-bold">{stats.active_listings}</p>
+                    <p className="text-3xl font-bold">{stats?.active_listings || 0}</p>
                   </div>
                   <Package className="h-12 w-12 text-emerald-200" />
                 </div>
               </CardContent>
             </Card>
+          )}
 
+          {statsLoading && !stats ? (
+            <StatCardSkeleton />
+          ) : (
             <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-blue-100">Total Donations</p>
-                    <p className="text-3xl font-bold">{stats.total_donations}</p>
+                    <p className="text-3xl font-bold">{stats?.total_donations || 0}</p>
                   </div>
                   <Heart className="h-12 w-12 text-blue-200" />
                 </div>
               </CardContent>
             </Card>
+          )}
 
+          {statsLoading && !stats ? (
+            <StatCardSkeleton />
+          ) : (
             <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-purple-100">Total Sales</p>
-                    <p className="text-3xl font-bold">{stats.total_sales}</p>
+                    <p className="text-3xl font-bold">{stats?.total_sales || 0}</p>
                   </div>
                   <DollarSign className="h-12 w-12 text-purple-200" />
                 </div>
               </CardContent>
             </Card>
+          )}
 
-            {/* Rating Summary Card */}
+          {/* Rating Summary Card - Progressive Loading */}
+          {ratingSummaryLoading && !ratingSummary ? (
+            <StatCardSkeleton />
+          ) : (
             <Card className="bg-gradient-to-br from-yellow-400 to-orange-500 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -545,8 +561,8 @@ const DonorDashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Main Content */}
         <Tabs defaultValue="listings" className="space-y-6">
@@ -743,7 +759,13 @@ const DonorDashboard = () => {
                     
                     {/* Items Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {sectionItems.map((item) => (
+                      {foodItemsLoading && !foodItems ? (
+                        // Show skeleton items while loading
+                        [...Array(3)].map((_, i) => (
+                          <FoodItemSkeleton key={`skeleton-${section.status}-${i}`} />
+                        ))
+                      ) : (
+                        sectionItems.map((item) => (
                         <Card key={item.id} className={getItemCardClass(item)}>
                           <CardHeader className="pb-4">
                             <div className="flex justify-between items-start">
@@ -809,7 +831,8 @@ const DonorDashboard = () => {
                             </div>
                           </CardContent>
                         </Card>
-                      ))}
+                        ))
+                      )}
                     </div>
                   </div>
                 );
@@ -852,7 +875,16 @@ const DonorDashboard = () => {
             </div>
             
             <div className="space-y-4">
-              {filteredOrders.length === 0 && orderFilter !== 'all' && (
+              {ordersLoading && !orders && (
+                // Show skeleton orders while loading
+                <div className="space-y-4">
+                  {[...Array(3)].map((_, i) => (
+                    <OrderSkeleton key={`order-skeleton-${i}`} />
+                  ))}
+                </div>
+              )}
+              
+              {filteredOrders.length === 0 && orderFilter !== 'all' && !ordersLoading && (
                 <div className="text-center py-8">
                   <p className="text-gray-500">No orders found with status: {orderFilter}</p>
                   <Button 
@@ -865,7 +897,7 @@ const DonorDashboard = () => {
                 </div>
               )}
               
-              {filteredOrders.map((order) => {
+              {!ordersLoading && filteredOrders.map((order) => {
                 let cardClassName = 'card-hover';
                 if (order.status === 'completed') {
                   cardClassName += ' ring-1 ring-green-200';
@@ -983,7 +1015,14 @@ const DonorDashboard = () => {
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {recipients.map((recipient) => (
+              {recipientsLoading && !recipients && (
+                // Show skeleton recipients while loading
+                [...Array(3)].map((_, i) => (
+                  <RecipientSkeleton key={`recipient-skeleton-${i}`} />
+                ))
+              )}
+              
+              {!recipientsLoading && recipients.map((recipient) => (
                 <Card key={recipient.recipient_id} className="card-hover">
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">
@@ -1096,7 +1135,7 @@ const DonorDashboard = () => {
               ))}
             </div>
 
-            {recipients.length === 0 && (
+            {!recipientsLoading && recipients.length === 0 && (
               <div className="text-center py-12">
                 <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No recipients yet</h3>
