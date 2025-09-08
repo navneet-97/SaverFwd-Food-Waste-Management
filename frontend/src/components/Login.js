@@ -31,8 +31,6 @@ const Login = () => {
     if (result.success) {
       // Navigate to dashboard for all users after login
       navigate('/dashboard');
-      // Force page reload to ensure proper state
-      setTimeout(() => window.location.reload(), 100);
     }
     
     setLoading(false);

@@ -66,6 +66,14 @@ const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
+  // Define logout function first to avoid closure issues
+  const logout = React.useCallback(() => {
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem('token');
+    toast.success("Logged out successfully", { duration: 2000 });
+  }, []);
+
   // Set up axios interceptor
   useEffect(() => {
     api.interceptors.request.use((config) => {
@@ -85,17 +93,19 @@ const AuthProvider = ({ children }) => {
         return Promise.reject(error);
       }
     );
-  }, [token]);
+  }, [token, logout]);
 
   // Check if user is authenticated on app load
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('🔍 Checking auth, token:', token ? 'present' : 'none');
       if (token) {
         try {
           const response = await api.get('/auth/me');
+          console.log('✅ Auth check successful, user:', response.data);
           setUser(response.data);
         } catch (error) {
-          console.error('Auth check failed:', error);
+          console.error('❌ Auth check failed:', error);
           logout();
         }
       }
@@ -103,7 +113,7 @@ const AuthProvider = ({ children }) => {
     };
 
     checkAuth();
-  }, [token]);
+  }, [token, logout]);
 
   // Intelligent preloading function
   const preloadDashboardData = async (userData, userApi) => {
@@ -144,13 +154,18 @@ const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
+    console.log('🔑 Login attempt for:', email);
     try {
       const response = await api.post('/auth/login', { email, password });
       const { access_token, user: userData } = response.data;
       
+      console.log('✅ Login successful, user data:', userData);
+      
       setToken(access_token);
       setUser(userData);
       localStorage.setItem('token', access_token);
+      
+      console.log('👤 User state updated, token saved');
       
       // Create API instance with the new token for preloading
       const authenticatedApi = axios.create({
@@ -158,14 +173,15 @@ const AuthProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${access_token}` }
       });
       
-      // Start intelligent preloading (non-blocking)
-      setTimeout(() => {
-        preloadDashboardData(userData, authenticatedApi);
-      }, 100); // Small delay to let login complete
+      // Temporarily disabled preloading to troubleshoot login
+      // setTimeout(() => {
+      //   preloadDashboardData(userData, authenticatedApi);
+      // }, 100);
       
       toast.success(`Welcome back, ${userData.full_name}!`, { duration: 2000 });
       return { success: true, user: userData };
     } catch (error) {
+      console.error('❌ Login failed:', error);
       const message = error.response?.data?.detail || 'Login failed';
       toast.error(message, { duration: 2000 });
       return { success: false, error: message };
@@ -190,12 +206,7 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setToken(null);
-    setUser(null);
-    localStorage.removeItem('token');
-    toast.success("Logged out successfully", { duration: 2000 });
-  };
+  // logout function moved above for closure fix
 
   const value = {
     user,
@@ -368,12 +379,17 @@ const ConditionalChatWidget = () => {
 const DashboardRouter = () => {
   const { user } = useAuth();
   
+  console.log('🏠 DashboardRouter - user:', user);
+  
   if (user?.role === 'donor') {
+    console.log('🍮 Loading DonorDashboard');
     return <DonorDashboard />;
   } else if (user?.role === 'recipient') {
+    console.log('🔄 Loading RecipientDashboard');
     return <RecipientDashboard />;
   }
   
+  console.log('⚠️ No valid user role, redirecting to home');
   return <Navigate to="/" replace />;
 };
 
