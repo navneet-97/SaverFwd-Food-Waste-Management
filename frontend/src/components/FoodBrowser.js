@@ -43,24 +43,13 @@ const FoodBrowser = () => {
     data: foodItems,
     loading,
     refresh: refreshFoodItems
-  } = useSmartRefresh({
-    fetchFunction: useCallback(async () => {
+  } = useSmartRefresh(
+    useCallback(async () => {
       const response = await api.get('/food-items');
       return response.data;
     }, [api]),
-    interval: 8000, // Food items update reasonably in browse mode
-    cacheKey: 'food-items-browse',
-    onDataChange: (newItems, oldItems) => {
-      if (oldItems && !loading) {
-        const newAvailableCount = newItems.filter(item => item.status === 'available').length;
-        const oldAvailableCount = oldItems.filter(item => item.status === 'available').length;
-        
-        if (newAvailableCount > oldAvailableCount) {
-          toast.success('🎆 New food items available!', { duration: 2000 });
-        }
-      }
-    }
-  });
+    8000
+  );
 
   useEffect(() => {
     filterItems();

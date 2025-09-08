@@ -16,24 +16,6 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Preload heavy components when user is logged in
-  useEffect(() => {
-    if (user) {
-      const preloadUserComponents = () => {
-        // Preload dashboard components based on user role
-        if (user.role === 'donor') {
-          import('./DonorDashboard').catch(err => console.warn('DonorDashboard preload failed:', err));
-        } else if (user.role === 'recipient') {
-          import('./RecipientDashboard').catch(err => console.warn('RecipientDashboard preload failed:', err));
-          import('./FoodBrowser').catch(err => console.warn('FoodBrowser preload failed:', err));
-        }
-      };
-      
-      // Preload after a short delay to not interfere with current page rendering
-      const timer = setTimeout(preloadUserComponents, 2000);
-      return () => clearTimeout(timer);
-    }
-  }, [user]);
 
   const handleLogout = () => {
     logout();

@@ -36,64 +36,39 @@ const RecipientDashboard = () => {
     data: stats,
     loading: statsLoading,
     refresh: refreshStats
-  } = useSmartRefresh({
-    fetchFunction: useCallback(async () => {
+  } = useSmartRefresh(
+    useCallback(async () => {
       const response = await api.get('/dashboard/stats');
       return response.data;
     }, [api]),
-    interval: 30000,
-    cacheKey: `recipient-stats-${user?.id}`,
-    onDataChange: (newStats, oldStats) => {
-      if (oldStats && !statsLoading) {
-        if (newStats.claimed_items > oldStats.claimed_items) {
-          toast.success('🎉 New item claimed!', { duration: 2000 });
-        }
-        if (newStats.purchased_items > oldStats.purchased_items) {
-          toast.success('🛜 New purchase completed!', { duration: 2000 });
-        }
-      }
-    }
-  });
+    30000
+  );
   
   // Smart refresh for orders
   const {
     data: orders,
     loading: ordersLoading,
     refresh: refreshOrders
-  } = useSmartRefresh({
-    fetchFunction: useCallback(async () => {
+  } = useSmartRefresh(
+    useCallback(async () => {
       const response = await api.get('/orders');
       return response.data;
     }, [api]),
-    interval: 10000,
-    cacheKey: `recipient-orders-${user?.id}`,
-    onDataChange: (newOrders, oldOrders) => {
-      if (oldOrders && !ordersLoading) {
-        // Check for status changes
-        newOrders.forEach(newOrder => {
-          const oldOrder = oldOrders.find(o => o.id === newOrder.id);
-          if (oldOrder && oldOrder.status !== newOrder.status) {
-            if (newOrder.status === 'confirmed') {
-              toast.info(`📋 Order #${newOrder.id.slice(-8)} confirmed by donor`);
-            }
-          }
-        });
-      }
-    }
-  });
+    10000
+  );
   
   // Smart refresh for ratings
   const {
     data: ratings,
     loading: ratingsLoading,
     refresh: refreshRatings
-  } = useSmartRefresh({
-    fetchFunction: useCallback(async () => {
+  } = useSmartRefresh(
+    useCallback(async () => {
       const response = await api.get('/ratings');
       return response.data;
     }, [api]),
-    interval: 60000 // Ratings update much less frequently
-  });
+    60000
+  );
   
   const loading = statsLoading || ordersLoading || ratingsLoading;
 

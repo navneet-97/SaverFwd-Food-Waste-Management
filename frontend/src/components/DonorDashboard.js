@@ -45,86 +45,62 @@ const DonorDashboard = () => {
   const {
     data: stats,
     loading: statsLoading,
-    isRefreshing: statsRefreshing,
     refresh: refreshStats
-  } = useSmartRefresh({
-    fetchFunction: useCallback(async () => {
+  } = useSmartRefresh(
+    useCallback(async () => {
       const response = await api.get('/dashboard/stats');
       return response.data;
     }, [api]),
-    interval: 30000, // Stats update much less frequently
-    cacheKey: `donor-stats-${user?.id}`,
-    onDataChange: (newStats, oldStats) => {
-      if (oldStats && !statsLoading) {
-        // Notify about changes in stats
-        if (newStats.total_donations > oldStats.total_donations) {
-          toast.success('🎉 New donation completed!', { duration: 2000 });
-        }
-        if (newStats.total_sales > oldStats.total_sales) {
-          toast.success('💰 New sale completed!', { duration: 2000 });
-        }
-      }
-    }
-  });
+    30000
+  );
 
   const {
     data: foodItems,
     loading: foodItemsLoading,
     refresh: refreshFoodItems
-  } = useSmartRefresh({
-    fetchFunction: useCallback(async () => {
+  } = useSmartRefresh(
+    useCallback(async () => {
       const response = await api.get('/food-items');
       return response.data;
     }, [api]),
-    interval: 10000, // Food items update reasonably
-    cacheKey: `donor-food-items-${user?.id}`
-  });
+    10000
+  );
 
   const {
     data: orders,
     loading: ordersLoading,
     refresh: refreshOrders
-  } = useSmartRefresh({
-    fetchFunction: useCallback(async () => {
+  } = useSmartRefresh(
+    useCallback(async () => {
       const response = await api.get('/orders');
       return response.data;
     }, [api]),
-    interval: 8000, // Orders update reasonably
-    cacheKey: `donor-orders-${user?.id}`,
-    onDataChange: (newOrders, oldOrders) => {
-      if (oldOrders && !ordersLoading) {
-        const oldCount = oldOrders.length;
-        const newCount = newOrders.length;
-        if (newCount > oldCount) {
-          toast.info('📦 New order received!');
-        }
-      }
-    }
-  });
+    8000
+  );
 
   const {
     data: recipients,
     loading: recipientsLoading,
     refresh: refreshRecipients
-  } = useSmartRefresh({
-    fetchFunction: useCallback(async () => {
+  } = useSmartRefresh(
+    useCallback(async () => {
       const response = await api.get('/donors/recipients');
       return response.data;
     }, [api]),
-    interval: 60000 // Recipients update much less frequently
-  });
+    60000
+  );
 
   const {
     data: ratingSummary,
     loading: ratingSummaryLoading,
     refresh: refreshRatingSummary
-  } = useSmartRefresh({
-    fetchFunction: useCallback(async () => {
+  } = useSmartRefresh(
+    useCallback(async () => {
       const response = await api.get(`/donors/${user?.id}/rating-summary`);
       return response.data;
     }, [api, user?.id]),
-    interval: 120000 // Rating summary updates very infrequently
-  });
+    120000
+  );
 
   // Form state for adding/editing food items
   const [formData, setFormData] = useState({
@@ -144,7 +120,6 @@ const DonorDashboard = () => {
 
   // Combined loading state
   const loading = statsLoading || foodItemsLoading || ordersLoading || recipientsLoading || ratingSummaryLoading;
-  const isRefreshing = statsRefreshing;
   
   // Manual refresh all data
   const refreshAllData = useCallback(() => {
