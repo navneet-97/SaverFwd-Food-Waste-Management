@@ -95,9 +95,7 @@ const RecipientDashboard = () => {
     interval: 60000 // Ratings update much less frequently
   });
   
-  // Critical path loading - only wait for essential data (stats + orders)
-  // Ratings can load in the background since they're rarely accessed
-  const criticalLoading = statsLoading || ordersLoading;
+  const loading = statsLoading || ordersLoading || ratingsLoading;
 
   const openAddressInMaps = (address) => {
     // Create Google Maps URL with the address
@@ -208,7 +206,7 @@ const RecipientDashboard = () => {
     return <Badge className={config.className}>{config.label}</Badge>;
   };
 
-  if (criticalLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>

@@ -142,9 +142,8 @@ const DonorDashboard = () => {
     pickup_window_end: ''
   });
 
-  // Critical path loading - only wait for essential data (stats + foodItems)
-  // This allows the dashboard to show much faster while other data loads in background
-  const criticalLoading = statsLoading || foodItemsLoading;
+  // Combined loading state
+  const loading = statsLoading || foodItemsLoading || ordersLoading || recipientsLoading || ratingSummaryLoading;
   const isRefreshing = statsRefreshing;
   
   // Manual refresh all data
@@ -446,7 +445,7 @@ const DonorDashboard = () => {
     return order.status === orderFilter;
   });
 
-  if (criticalLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
