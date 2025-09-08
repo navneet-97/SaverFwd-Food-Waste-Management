@@ -8,7 +8,10 @@ export const useSmartRefresh = (fetchFunction, interval = 30000) => {
   const [error, setError] = useState(null);
 
   const fetchData = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     
     try {
       const result = await fetchFunction();
@@ -17,19 +20,26 @@ export const useSmartRefresh = (fetchFunction, interval = 30000) => {
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err);
+      // Only set empty data if current data is null to prevent null pointer exceptions
+      if (data === null) {
+        setData([]);
+      }
     } finally {
       setLoading(false);
     }
   }, [fetchFunction, user]);
 
+  // Avoid unnecessary re-fetches if user hasn't changed
+  const stableUser = user?.id;
+
   useEffect(() => {
-    if (user) {
+    if (stableUser) {
       fetchData();
       
       const intervalId = setInterval(fetchData, interval);
       return () => clearInterval(intervalId);
     }
-  }, [fetchData, interval, user]);
+  }, [fetchData, interval, stableUser]);
 
   const refresh = useCallback(() => {
     setLoading(true);

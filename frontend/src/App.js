@@ -316,13 +316,49 @@ const ConditionalChatWidget = () => {
   return <ChatWidget />;
 };
 
-// Dashboard Router Component
+// Dashboard Router Component with timeout and error handling
 const DashboardRouter = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const [showSlowWarning, setShowSlowWarning] = useState(false);
   
-  if (user?.role === 'donor') {
+  // Show warning if loading takes too long
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        setShowSlowWarning(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowSlowWarning(false);
+    }
+  }, [loading]);
+  
+  // Show loading while user data is being verified
+  if (loading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 mb-2">Loading dashboard...</p>
+          {showSlowWarning && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-500 mb-2">Taking longer than usual?</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="text-emerald-600 hover:text-emerald-700 text-sm underline"
+              >
+                Try refreshing the page
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  
+  if (user.role === 'donor') {
     return <DonorDashboard />;
-  } else if (user?.role === 'recipient') {
+  } else if (user.role === 'recipient') {
     return <RecipientDashboard />;
   }
   
