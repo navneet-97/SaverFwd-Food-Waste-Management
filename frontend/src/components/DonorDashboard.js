@@ -142,8 +142,9 @@ const DonorDashboard = () => {
     pickup_window_end: ''
   });
 
-  // Combined loading state
-  const loading = statsLoading || foodItemsLoading || ordersLoading || recipientsLoading || ratingSummaryLoading;
+  // Critical path loading - only wait for essential data (stats + foodItems)
+  // This allows the dashboard to show much faster while other data loads in background
+  const criticalLoading = statsLoading || foodItemsLoading;
   const isRefreshing = statsRefreshing;
   
   // Manual refresh all data
@@ -445,7 +446,7 @@ const DonorDashboard = () => {
     return order.status === orderFilter;
   });
 
-  if (loading) {
+  if (criticalLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
@@ -851,20 +852,27 @@ const DonorDashboard = () => {
             </div>
             
             <div className="space-y-4">
-              {filteredOrders.length === 0 && orderFilter !== 'all' && (
-                <div className="text-center py-8">
-                  <p className="text-gray-500">No orders found with status: {orderFilter}</p>
-                  <Button 
-                    onClick={() => setOrderFilter('all')} 
-                    variant="outline" 
-                    className="mt-2"
-                  >
-                    Show All Orders
-                  </Button>
+              {ordersLoading && !orders ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
+                  <span className="text-gray-600">Loading orders...</span>
                 </div>
-              )}
-              
-              {filteredOrders.map((order) => {
+              ) : (
+                <>
+                  {filteredOrders.length === 0 && orderFilter !== 'all' && (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">No orders found with status: {orderFilter}</p>
+                      <Button 
+                        onClick={() => setOrderFilter('all')} 
+                        variant="outline" 
+                        className="mt-2"
+                      >
+                        Show All Orders
+                      </Button>
+                    </div>
+                  )}
+                  
+                  {filteredOrders.map((order) => {
                 let cardClassName = 'card-hover';
                 if (order.status === 'completed') {
                   cardClassName += ' ring-1 ring-green-200';
@@ -962,12 +970,14 @@ const DonorDashboard = () => {
                 );
               })}
 
-              {orders.length === 0 && orderFilter === 'all' && (
-                <div className="text-center py-12">
-                  <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
-                  <p className="text-gray-600">Orders and claims will appear here when recipients interact with your listings</p>
-                </div>
+                  {orders && orders.length === 0 && orderFilter === 'all' && (
+                    <div className="text-center py-12">
+                      <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
+                      <p className="text-gray-600">Orders and claims will appear here when recipients interact with your listings</p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </TabsContent>
@@ -982,7 +992,13 @@ const DonorDashboard = () => {
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {recipients.map((recipient) => (
+              {recipientsLoading && !recipients ? (
+                <div className="col-span-full flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mr-3"></div>
+                  <span className="text-gray-600">Loading recipients...</span>
+                </div>
+              ) : (
+                recipients.map((recipient) => (
                 <Card key={recipient.recipient_id} className="card-hover">
                   <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">
@@ -1092,10 +1108,11 @@ const DonorDashboard = () => {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                ))
+              )}
             </div>
 
-            {recipients.length === 0 && (
+            {recipients && recipients.length === 0 && (
               <div className="text-center py-12">
                 <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No recipients yet</h3>

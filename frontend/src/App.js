@@ -105,6 +105,44 @@ const AuthProvider = ({ children }) => {
     checkAuth();
   }, [token]);
 
+  // Intelligent preloading function
+  const preloadDashboardData = async (userData, userApi) => {
+    try {
+      // Start preloading critical dashboard data immediately after login
+      const preloadPromises = [];
+      
+      if (userData.role === 'donor') {
+        // Preload donor dashboard critical data
+        preloadPromises.push(
+          userApi.get('/dashboard/stats').catch(() => null),
+          userApi.get('/food-items').catch(() => null)
+        );
+      } else if (userData.role === 'recipient') {
+        // Preload recipient dashboard critical data  
+        preloadPromises.push(
+          userApi.get('/dashboard/stats').catch(() => null),
+          userApi.get('/orders').catch(() => null)
+        );
+      }
+      
+      // Also preload food browser data (commonly accessed)
+      preloadPromises.push(
+        userApi.get('/food-items').catch(() => null)
+      );
+      
+      // Execute all preloads in parallel (fire and forget)
+      Promise.all(preloadPromises).then(() => {
+        console.log('✅ Dashboard data preloaded successfully');
+      }).catch((error) => {
+        console.warn('⚠️  Preloading failed (non-critical):', error);
+      });
+      
+    } catch (error) {
+      // Preloading errors are non-critical
+      console.warn('⚠️  Preloading failed (non-critical):', error);
+    }
+  };
+
   const login = async (email, password) => {
     try {
       const response = await api.post('/auth/login', { email, password });
@@ -113,6 +151,17 @@ const AuthProvider = ({ children }) => {
       setToken(access_token);
       setUser(userData);
       localStorage.setItem('token', access_token);
+      
+      // Create API instance with the new token for preloading
+      const authenticatedApi = axios.create({
+        baseURL: API,
+        headers: { Authorization: `Bearer ${access_token}` }
+      });
+      
+      // Start intelligent preloading (non-blocking)
+      setTimeout(() => {
+        preloadDashboardData(userData, authenticatedApi);
+      }, 100); // Small delay to let login complete
       
       toast.success(`Welcome back, ${userData.full_name}!`, { duration: 2000 });
       return { success: true, user: userData };

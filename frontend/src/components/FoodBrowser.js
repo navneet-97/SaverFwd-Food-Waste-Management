@@ -177,6 +177,7 @@ const FoodBrowser = () => {
     window.open(mapsUrl, '_blank', 'noopener,noreferrer');
   };
 
+  // FoodBrowser already optimized - only waits for foodItems to load
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
